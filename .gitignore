@@ -1,0 +1,18 @@
+# Terragrunt-specific files
+.terragrunt-cache/
+*.tfstate
+*.tfstate.backup
+
+# Terraform-specific files
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+
+# IDE settings
+.idea/
