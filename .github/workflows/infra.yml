@@ -21,21 +21,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Log in to Azure.
-      # This uses the Service Principal credentials stored in the AZURE_CREDENTIALS GitHub secret
-      # to authenticate with Azure using OpenID Connect (OIDC).
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # Step 2: Set Azure Credentials Environment Variables.
+      # This step parses the AZURE_CREDENTIALS secret and sets environment variables
+      # (ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, ARM_SUBSCRIPTION_ID)
+      # that the Terraform AzureRM provider uses for Service Principal authentication.
+      - name: Set Azure Credentials Environment Variables
+        run: |
+          echo "ARM_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r .clientId)" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r .clientSecret)" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r .tenantId)" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r .subscriptionId)" >> $GITHUB_ENV
 
       # Step 3: Setup Terraform.
       # This action installs a specific version of Terraform.
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.8.5
-
+            terraform_version: 1.8.5
       # Step 4: Setup Terragrunt.
       # This step downloads and installs a specific version of the Terragrunt binary.
       - name: Setup Terragrunt
