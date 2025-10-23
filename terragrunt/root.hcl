@@ -20,3 +20,13 @@ remote_state {
     key                  = "${path_relative_to_include()}/terraform.tfstate"
   }
 }
+
+# Configure the AzureRM provider to use environment variables for authentication
+# This is necessary when authenticating with a Service Principal in GitHub Actions
+# and avoids the provider attempting to use Azure CLI authentication.
+provider "azurerm" {
+  features {}
+  # The client_id, client_secret, tenant_id, and subscription_id are automatically
+  # picked up from environment variables (ARM_CLIENT_ID, ARM_CLIENT_SECRET,
+  # ARM_TENANT_ID, ARM_SUBSCRIPTION_ID) set by the azure/login@v1 action.
+}
