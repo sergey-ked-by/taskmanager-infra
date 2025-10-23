@@ -26,7 +26,8 @@ remote_state {
 # and avoids the provider attempting to use Azure CLI authentication.
 provider "azurerm" {
   features {}
-  # The client_id, client_secret, tenant_id, and subscription_id are automatically
-  # picked up from environment variables (ARM_CLIENT_ID, ARM_CLIENT_SECRET,
-  # ARM_TENANT_ID, ARM_SUBSCRIPTION_ID) set by the azure/login@v1 action.
+  client_id       = get_env("ARM_CLIENT_ID")
+  client_secret   = get_env("ARM_CLIENT_SECRET")
+  tenant_id       = get_env("ARM_TENANT_ID")
+  subscription_id = get_env("ARM_SUBSCRIPTION_ID")
 }
