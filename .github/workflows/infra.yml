@@ -1,54 +1,52 @@
-#file: noinspection YAMLSchemaValidation
 # This workflow defines the Continuous Deployment (CD) pipeline for the infrastructure.
-  name: Deploy Infrastructure
+name: Deploy Infrastructure
 
-  on:
-    # Triggers the workflow on push events to the main branch.
-    push:
-      branches:
-        - main
-    # Allows this workflow to be run manually from the GitHub Actions UI.
-    workflow_dispatch:
+on:
+  # Triggers the workflow on push events to the main branch.
+  push:
+    branches:
+      - main
+  # Allows this workflow to be run manually from the GitHub Actions UI.
+  workflow_dispatch:
 
-  jobs:
-    deploy:
-      runs-on: ubuntu-latest
-      # These permissions are needed for secure authentication with Azure.
-      permissions:
-        id-token: write
-        contents: read
-      steps:
-        # Step 1: Check out the repository code.
-        - name: Checkout code
-          uses: actions/checkout@v4
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # These permissions are needed for secure authentication with Azure.
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      # Step 1: Check out the repository code.
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       # Step 2: Log in to Azure.
       # This uses the Service Principal credentials stored in the AZURE_CREDENTIALS GitHub secret
       # to authenticate with Azure using OpenID Connect (OIDC).
-        - name: Azure Login
-          uses: azure/login@v1
-          with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       # Step 3: Setup Terraform.
       # This action installs a specific version of Terraform.
-        - name: Setup Terraform
-          uses: hashicorp/setup-terraform@v3
-          with:
-            terraform_version: 1.8.5
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
 
       # Step 4: Setup Terragrunt.
       # This step downloads and installs a specific version of the Terragrunt binary.
-        - name: Setup Terragrunt
-          run: |
-            wget -O terragrunt_binary https://github.com/gruntwork-io/terragrunt/releases/download/v0.58.10/terragrunt_linux_amd64
-            chmod +x terragrunt_binary
-            sudo mv terragrunt_binary /usr/local/bin/
-            echo "/usr/local/bin" >> $GITHUB_PATH
+      - name: Setup Terragrunt
+        run: |
+          wget -O terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.58.10/terragrunt_linux_amd64
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
 
       # Step 5: Run Terragrunt Apply.
       # This command finds all terragrunt.hcl files in the repository and runs 'apply' for each.
-      # The '--terragrunt-non-interactive' flag is essential for running in a CI/CDenvironment.
-      # The '-auto-approve' flag automatically approves the plan, allowing the apply to proceed without manual intervention.
-        - name: Terragrunt Apply
-          run: /usr/local/bin/terragrunt_binary run-all apply --terragrunt-non-interactive -auto-approve
+      # The '--terragrunt-non-interactive' flag is essential for running in a CI/CD environment.
+      # The '-auto-approve' flag automatically approves the plan, allowing apply to proceed without manual intervention.
+      - name: Terragrunt Apply
+        run: terragrunt run-all apply --terragrunt-non-interactive -auto-approve
