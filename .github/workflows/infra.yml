@@ -51,4 +51,4 @@
       # The '--terragrunt-non-interactive' flag is essential for running in a CI/CDenvironment.
       # The '-auto-approve' flag automatically approves the plan, allowing the apply to proceed without manual intervention.
         - name: Terragrunt Apply
-          run: terragrunt run-all apply --terragrunt-non-interactive -auto-approve
+          run: /usr/local/bin/terragrunt_binary run-all apply --terragrunt-non-interactive -auto-approve
