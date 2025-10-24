@@ -60,5 +60,5 @@ inputs = {
 
   # Get required IDs from dependencies
   vnet_subnet_id    = dependency.vnet.outputs.aks_subnet_id
-  acr_registry_id   = dependency.acr.outputs.id
+  acr_id   = dependency.acr.outputs.id
 }

@@ -21,7 +21,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   # Attach the Azure Container Registry to the AKS cluster.
   # This automatically handles the required 'AcrPull' role assignment.
-  acr_registry_id = var.acr_registry_id
+
 
   # Network settings
   network_profile {
@@ -29,5 +29,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
     service_cidr   = "10.0.3.0/24"
     dns_service_ip = "10.0.3.10"
   }
+}
+
+# Grant the AKS Kubelet Identity the AcrPull role on the Azure Container Registry.
+resource "azurerm_role_assignment" "acr_pull_role_assignment" {
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.aks.identity[0].principal_id
 }
 

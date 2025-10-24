@@ -32,7 +32,7 @@ variable "vnet_subnet_id" {
   type        = string
 }
 
-variable "acr_registry_id" {
+variable "acr_id" {
   description = "The ID of the Azure Container Registry to link to the cluster."
   type        = string
 }

@@ -55,7 +55,7 @@ terraform {
 
 # 5. Inputs for the module
 inputs = {
-  server_name         = "psql-testing-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  server_name         = "psql-taskmanager-testing"
   resource_group_name = "rg-taskmanager-testing"
   location            = "canadacentral"
   db_name             = "taskmanagerdb"
