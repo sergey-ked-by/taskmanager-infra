@@ -55,11 +55,19 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
 
   # B_Standard_B1ms is a burstable, low-cost SKU suitable for development/testing.
 
-  sku_name   = "B_Standard_B1ms"
+    sku_name   = "B_Standard_B1ms"
 
-  storage_mb = 32768 # 32 GB of storage.
+    storage_mb = 32768 # 32 GB of storage.
 
-}
+  
+
+    lifecycle {
+
+      ignore_changes = [zone]
+
+    }
+
+  }
 
 
 
