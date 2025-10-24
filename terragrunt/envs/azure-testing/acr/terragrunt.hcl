@@ -46,7 +46,7 @@ terraform {
 # 4. Inputs for the module
 inputs = {
   # Container Registry names must be globally unique and alphanumeric.
-  registry_name       = "acrtaskmanager${formatdate("YYYYMMDD", timestamp())}"
+  registry_name       = "acrtaskmanagertesting"
   resource_group_name = "rg-taskmanager-testing"
   location            = "canadacentral"
 }
