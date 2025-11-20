@@ -1,39 +1,56 @@
 # Task Manager Infrastructure
 
-This repository contains the infrastructure as code (IaC) for the Task Manager application, managed using Terragrunt and Terraform.
+This repository contains the Infrastructure as Code (IaC) for the Task Manager application, managed using Terragrunt and Terraform. It is responsible for defining and deploying all necessary cloud resources on Microsoft Azure.
 
-## Project Structure
+## Project Ecosystem
 
-The project is organized into the following main directories:
+This repository is a core component of a multi-repo project:
 
-- `terragrunt/envs/`: Contains environment-specific configurations (e.g., `azure-testing`). Each subdirectory within an environment represents a specific service or component (e.g., `acr`, `aks`, `db`, `vnet`).
-- `terragrunt/modules/`: Contains reusable Terraform modules that define the infrastructure components (e.g., `azure-acr`, `azure-aks`, `azure-db-postgres`, `azure-vnet`).
+1.  **`taskmanager-app`**: The core Spring Boot application. It triggers the deployment process in this repository.
+2.  **`taskmanager-tests-java`**: Contains the test suite. This repository triggers smoke tests after a successful deployment.
+3.  **`taskmanager-infra`** (This repository): The deployment engine. It uses Terragrunt and Terraform to provision and manage the infrastructure on Azure.
 
-## Getting Started
+## Automated Deployment (CI/CD)
+
+This repository acts as the deployment engine for the entire project, orchestrated by the GitHub Actions workflow defined in `.github/workflows/infra.yml`.
+
+### Deployment Trigger
+
+The workflow is **not** typically run directly. Instead, it is triggered by a `repository_dispatch` event from the `taskmanager-app` repository. This happens automatically whenever a new version of the application is built after a merge to the `main` branch.
+
+### Deployment Process
+
+1.  **Event Received**: The workflow starts when it receives the `deploy-staging` event. The event payload contains the `image_tag` for the new Docker image of the application.
+2.  **Set Terraform Variable**: The workflow extracts the `image_tag` and sets it as an environment variable named `TF_VAR_app_image_tag`. Terragrunt automatically passes variables in this format to the underlying Terraform modules.
+3.  **Apply Infrastructure**: The workflow runs `terragrunt run-all apply`. Terragrunt then orchestrates Terraform to apply any necessary changes to the cloud infrastructure. This includes updating the Azure Kubernetes Service (AKS) deployment to use the new application image tag.
+4.  **Trigger Smoke Tests**: After `terragrunt apply` completes successfully, the workflow sends a `repository_dispatch` event (`run-smoke-suite`) to the `taskmanager-tests-java` repository. This tells the test repository to run a quick suite of smoke tests against the newly updated staging environment to verify its health.
+
+## Manual Deployment
+
+While the primary method of deployment is automated, you can still run Terragrunt manually.
 
 ### Prerequisites
 
-- [Terraform](https://www.terraform.io/downloads.html)
-- [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/)
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (for Azure authentication)
+- [Terraform](https://www.terraform.io/downloads.html) v1.8.5+
+- [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) v0.58.10+
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (and be logged in)
+- Correct Azure credentials configured as environment variables (`ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, etc.).
 
-### Validation
+### Commands
 
-To validate the Terragrunt and Terraform configurations, navigate to the `terragrunt/envs/azure-testing` directory and run:
+To apply all infrastructure changes for the `azure-testing` environment manually:
 
-```bash
-terragrunt validate --all
-```
+1.  Navigate to the environment directory:
+    ```bash
+    cd terragrunt/envs/azure-testing
+    ```
+2.  Set the application image tag you wish to deploy. This is required by the Terraform scripts.
+    ```bash
+    export TF_VAR_app_image_tag="your-image-tag-here"
+    ```
+3.  Run the apply command:
+    ```bash
+    terragrunt run-all apply
+    ```
 
-This command will recursively run `terraform validate` for all `terragrunt.hcl` files found in the subdirectories.
-
-### Deployment
-
-(Instructions for deployment will be added here)
-
-## Modules Overview
-
-- **`azure-acr`**: Azure Container Registry module.
-- **`azure-aks`**: Azure Kubernetes Service module.
-- **`azure-db-postgres`**: Azure PostgreSQL Database module.
-- **`azure-vnet`**: Azure Virtual Network module.
+To validate the configuration without applying changes, you can run `terragrunt run-all validate`.

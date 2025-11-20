@@ -6,6 +6,9 @@ on:
   push:
     branches:
       - main
+  # Allows this workflow to be triggered by the 'deploy-staging' event from the application repo.
+  repository_dispatch:
+    types: [deploy-staging]
   # Allows this workflow to be run manually from the GitHub Actions UI.
   workflow_dispatch:
 
@@ -46,9 +49,32 @@ jobs:
           chmod +x terragrunt_binary
           sudo mv terragrunt_binary /usr/local/bin/
 
-      # Step 5: Run Terragrunt Apply.
-      # This command finds all terragrunt.hcl files in the repository and runs 'apply' for each.
-      # The '--terragrunt-non-interactive' flag is essential for running in a CI/CD environment.
-      # The '-auto-approve' flag automatically approves the plan, allowing apply to proceed without manual intervention.
+      # Step 5: Set Image Tag for Terragrunt
+      # Sets the image tag from the dispatch event or defaults to 'latest' for other triggers.
+      # This variable will be passed to Terraform.
+      - name: Set Image Tag for Terragrunt
+        run: |
+          IMAGE_TAG=${{ github.event.client_payload.image_tag || 'latest' }}
+          echo "TF_VAR_app_image_tag=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "Image tag set to: $IMAGE_TAG"
+
+      # Step 6: Run Terragrunt Apply.
+      # This command finds all terragrunt.hcl files and runs 'apply'.
+      # It will use the TF_VAR_app_image_tag variable to configure the application version.
       - name: Terragrunt Apply
+        id: apply
         run: /usr/local/bin/terragrunt_binary run-all apply --terragrunt-non-interactive -auto-approve
+        
+      # Step 7: Trigger Smoke Tests
+      # After a successful deployment, this step triggers the smoke tests in the tests repository.
+      - name: Trigger Smoke Tests
+        if: steps.apply.outcome == 'success'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PAT_FOR_DISPATCH_TO_TESTS }} # Use a dedicated PAT for the tests repo
+          repository: ${{ github.repository_owner }}/taskmanager-tests-java
+          event-type: run-smoke-suite
+          client-payload: |
+            {
+              "base_url": "https://staging.taskmanager.example.com"
+            }
